@@ -1,0 +1,15 @@
+# deps
+node_modules/
+
+# couchdb docker files
+data
+config
+
+# secret
+*.pem
+
+# sqlite files
+*.db*
+
+# env files
+.env
