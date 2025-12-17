@@ -113,7 +113,7 @@ export const generateCouchDbJwt = async (userId: string) => {
     privateKey,
     {
       algorithm: "RS256",
-      expiresIn: "24h",
+      expiresIn: "1h",
       header: {
         alg: "RS256",
         kid: "_default", // Match the key ID in jwt_keys section
