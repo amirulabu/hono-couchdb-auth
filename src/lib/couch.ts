@@ -1,14 +1,11 @@
-import Nano from "nano";
-import type { RequestError } from "nano";
-
 import { SHA256 } from "bun";
+import * as jwt from "jsonwebtoken";
+import type { RequestError } from "nano";
+import Nano from "nano";
+import { env } from "./env";
 import { UserSecurity } from "./models";
 
-import * as jwt from "jsonwebtoken";
-
-const db = Nano(
-  process.env.COUCHDB_URL || "http://admin:password@localhost:5984"
-);
+const db = Nano(env.COUCHDB_URL);
 
 const getUserDbName = (userId: string) => {
   const hashedUserDb = SHA256.hash(userId, "hex");
@@ -55,7 +52,7 @@ export const createUserDbIfNotExists = async ({
   const userDbName = getUserDbName(userId);
 
   try {
-    const userDb = await db.db.get(userDbName);
+    await db.db.get(userDbName);
     console.log(`Database ${userDbName} already exists.`);
   } catch (error) {
     const err = error as RequestError;
@@ -100,12 +97,8 @@ const ensureUserExists = async (userId: string) => {
 export const generateCouchDbJwt = async (userId: string) => {
   await ensureUserExists(userId);
 
-  const privateKey = process.env.COUCHDB_JWT_SECRET;
-  if (!privateKey) {
-    throw new Error(
-      "COUCHDB_JWT_SECRET is not defined in environment variables"
-    );
-  }
+  const privateKey = env.COUCHDB_JWT_SECRET;
+
   const token = jwt.sign(
     {
       sub: userId,

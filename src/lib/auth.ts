@@ -1,12 +1,15 @@
 import { betterAuth } from "better-auth";
 import { createAuthMiddleware } from "better-auth/api";
+import { bearer } from "better-auth/plugins";
+import { createUserDbIfNotExists, generateCouchDbJwt } from "./couch";
 import { db } from "./db";
-import { createUserDbIfNotExists } from "./couch";
+import { env } from "./env";
 
 // Initialize Better Auth with Bun's native SQLite
 export const auth = betterAuth({
   // Database configuration using bun:sqlite
   database: db,
+  plugins: [bearer()],
   // Email and password authentication
   emailAndPassword: {
     enabled: true,
@@ -24,13 +27,13 @@ export const auth = betterAuth({
   },
 
   // Security configuration
-  secret: process.env.AUTH_SECRET!,
+  secret: env.AUTH_SECRET,
 
   // Base URL for redirects and callbacks
-  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL: env.BETTER_AUTH_URL,
 
   // Trust proxy headers (useful for production behind reverse proxy)
-  trustedOrigins: [process.env.BETTER_AUTH_URL || "http://localhost:3000"],
+  // trustedOrigins: [env.BETTER_AUTH_URL],
 
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
@@ -39,6 +42,21 @@ export const auth = betterAuth({
         if (!newSession) return;
         console.log("New user signed up:", { user: newSession.user });
         await createUserDbIfNotExists({ userId: newSession.user.id });
+      }
+      if (ctx.path.endsWith("/sign-in/email")) {
+        const session = ctx.context.newSession || ctx.context.session;
+        if (!session) return;
+        const userId = session.user.id;
+        const couchJwt = await generateCouchDbJwt(userId);
+
+        // Modify the response body to include the JWT
+        const returned = ctx.context.returned;
+        if (returned && typeof returned === "object") {
+          (ctx.context as { returned: Record<string, unknown> }).returned = {
+            ...returned,
+            couchjwt: couchJwt,
+          };
+        }
       }
     }),
   },

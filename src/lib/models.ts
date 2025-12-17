@@ -1,4 +1,4 @@
-import Nano from "nano";
+import type Nano from "nano";
 
 interface NamesAndRoles {
   names: string[];

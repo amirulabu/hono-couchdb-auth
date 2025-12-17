@@ -2,16 +2,20 @@
   "name": "hono-couchdb-auth",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
+    "typecheck": "bun x --bun tsc --noEmit",
     "auth:generate": "bun x --bun @better-auth/cli@latest generate",
-    "auth:migrate": "bun x --bun @better-auth/cli@latest migrate"
+    "auth:migrate": "bun x --bun @better-auth/cli@latest migrate",
+    "auth:reset": "bun run scripts/reset-db.ts && bun run auth:migrate"
   },
   "dependencies": {
+    "@t3-oss/env-core": "^0.13.10",
     "@types/jsonwebtoken": "^9.0.10",
     "better-auth": "^1.4.4",
     "dotenv": "^17.2.3",
     "hono": "^4.10.7",
     "jsonwebtoken": "^9.0.2",
-    "nano": "^11.0.3"
+    "nano": "^11.0.3",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@types/bun": "latest"

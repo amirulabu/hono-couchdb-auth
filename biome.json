@@ -1,0 +1,18 @@
+{
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2
+  },
+  "javascript": {
+    "formatter": {
+      "trailingCommas": "es5"
+    }
+  },
+  "linter": {
+    "rules": {
+      "style": {
+        "useNodejsImportProtocol": "off"
+      }
+    }
+  }
+}

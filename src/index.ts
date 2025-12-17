@@ -1,8 +1,9 @@
-import { Hono } from "hono";
 import { config } from "dotenv";
-import { auth } from "./lib/auth";
+import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { auth } from "./lib/auth";
 import { generateCouchDbJwt } from "./lib/couch";
+import { env } from "./lib/env";
 
 // Load environment variables
 config();
@@ -29,28 +30,25 @@ app.get("/session", async (c) => {
   const currentSession = await auth.api.getSession(c.req.raw);
   if (!currentSession) return c.body(null, 401);
 
-  const session = currentSession.session;
   const user = currentSession.user;
+  const couchJwt = await generateCouchDbJwt(user.id);
   return c.json({
-    session,
-    user,
+    session:{
+      expiresAt: currentSession.session.expiresAt,
+    },
+    user:{
+      name: user.name,
+      email: user.email,
+      id: user.id,
+    },
+    couchJwt,
   });
-});
-
-app.get("/couch-jwt", async (c) => {
-  const currentSession = await auth.api.getSession(c.req.raw);
-  if (!currentSession) return c.body(null, 401);
-  const userId = currentSession.user.id;
-
-  const couchJwt = await generateCouchDbJwt(userId);
-
-  return c.json({ couchJwt });
 });
 
 app.get("/", (c) => c.text("Hello, Hono!"));
 
 // Start server
-const port = parseInt(process.env.PORT || "3000");
+const port = env.PORT;
 
 export default {
   port,
