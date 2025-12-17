@@ -12,24 +12,35 @@ const getUserDbName = (userId: string) => {
   return `userdb_${hashedUserDb}`;
 };
 
+// Helper function to create consistent user documents
+const createUserDoc = (userId: string) => ({
+  _id: `org.couchdb.user:${userId}`,
+  name: userId,
+  roles: ["registered-user"],
+  type: "user",
+  password: Bun.randomUUIDv7(), // generate a random password
+  createdAt: new Date().toISOString(),
+});
+
 const registerUser = async (userId: string) => {
   const usersDb = db.use("_users");
-  const userDoc = {
-    _id: `org.couchdb.user:${userId}`,
-    name: userId,
-    roles: ["registered-user"],
-    type: "user",
-    password: Bun.randomUUIDv7(), // generate a random password
-    createdAt: new Date().toISOString(),
-  };
+  const userDoc = createUserDoc(userId);
+  let userCreated = false;
+  let dbCreated = false;
 
   try {
+    // Step 1: Create user document
     await usersDb.insert(userDoc);
+    userCreated = true;
     console.log(`User document for ${userId} created in _users database.`);
 
+    // Step 2: Create user database
     const userDbName = getUserDbName(userId);
     await db.db.create(userDbName);
+    dbCreated = true;
     console.log(`Database ${userDbName} created for user ${userId}.`);
+
+    // Step 3: Set security document
     const userDb = db.use(userDbName);
     const userSecurityDoc = new UserSecurity(
       { names: [], roles: [] },
@@ -38,8 +49,31 @@ const registerUser = async (userId: string) => {
 
     console.log(`Setting security document for database ${userDbName}.`);
     await userDb.insert(userSecurityDoc, "_security");
+    console.log(`User ${userId} fully registered with personal database.`);
   } catch (error) {
-    console.error(`Error creating user document for ${userId}:`, error);
+    console.error(`Error during user registration for ${userId}:`, error);
+    
+    // Rollback: Clean up partially created resources
+    if (dbCreated) {
+      try {
+        const userDbName = getUserDbName(userId);
+        await db.db.destroy(userDbName);
+        console.log(`Rolled back database ${userDbName}`);
+      } catch (rollbackError) {
+        console.error(`Failed to rollback database for ${userId}:`, rollbackError);
+      }
+    }
+    
+    if (userCreated) {
+      try {
+        const doc = await usersDb.get(userDoc._id);
+        await usersDb.destroy(doc._id, doc._rev);
+        console.log(`Rolled back user document for ${userId}`);
+      } catch (rollbackError) {
+        console.error(`Failed to rollback user document for ${userId}:`, rollbackError);
+      }
+    }
+    
     throw error;
   }
 };
@@ -65,37 +99,9 @@ export const createUserDbIfNotExists = async ({
   }
 };
 
-const ensureUserExists = async (userId: string) => {
-  const usersDb = db.use("_users");
-  const userDocId = `org.couchdb.user:${userId}`;
-
-  try {
-    await usersDb.get(userDocId);
-    // User exists, no need to create
-    return;
-  } catch (error) {
-    const err = error as RequestError;
-    if (err?.statusCode === 404) {
-      // User doesn't exist, create it
-      const userDoc = {
-        _id: userDocId,
-        name: userId,
-        roles: ["registered-user"],
-        type: "user",
-        password: Bun.randomUUIDv7(), // generate a random password
-        createdAt: new Date().toISOString(),
-      };
-      await usersDb.insert(userDoc);
-      console.log(`User document for ${userId} created in _users database.`);
-    } else {
-      console.error(`Error checking user ${userId}:`, error);
-      throw error;
-    }
-  }
-};
-
 export const generateCouchDbJwt = async (userId: string) => {
-  await ensureUserExists(userId);
+  // Ensure both user document AND user database exist
+  await createUserDbIfNotExists({ userId });
 
   const privateKey = env.COUCHDB_JWT_SECRET;
 
