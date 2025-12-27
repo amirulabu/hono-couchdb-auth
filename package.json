@@ -8,6 +8,7 @@
     "auth:reset": "bun run scripts/reset-db.ts && bun run auth:migrate"
   },
   "dependencies": {
+    "@amirulabu/couchdb-better-auth": "^0.1.5",
     "@t3-oss/env-core": "^0.13.10",
     "@types/jsonwebtoken": "^9.0.10",
     "better-auth": "^1.4.4",
