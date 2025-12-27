@@ -1,14 +1,18 @@
+import { couchdbAdapter } from "@amirulabu/couchdb-better-auth";
 import { betterAuth } from "better-auth";
 import { createAuthMiddleware } from "better-auth/api";
 import { bearer } from "better-auth/plugins";
 import { createUserDbIfNotExists, generateCouchDbJwt } from "./couch";
-import { db } from "./db";
 import { env } from "./env";
 
-// Initialize Better Auth with Bun's native SQLite
+// Initialize Better Auth with CouchDB adapter
 export const auth = betterAuth({
-  // Database configuration using bun:sqlite
-  database: db,
+  // Database configuration using CouchDB adapter
+  database: couchdbAdapter({
+    url: env.COUCHDB_URL,
+    database: "better_auth", // Optional: defaults to "better_auth"
+    debugLogs: true,
+  }),
   plugins: [bearer()],
   // Email and password authentication
   emailAndPassword: {
