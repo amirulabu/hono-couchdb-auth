@@ -11,6 +11,7 @@ export const auth = betterAuth({
   database: couchdbAdapter({
     url: env.COUCHDB_URL,
     database: "better_auth", // Optional: defaults to "better_auth"
+    debugLogs: true,
   }),
   plugins: [bearer()],
   // Email and password authentication

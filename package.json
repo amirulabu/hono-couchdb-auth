@@ -5,7 +5,8 @@
     "typecheck": "bun x --bun tsc --noEmit",
     "auth:generate": "bun x --bun @better-auth/cli@latest generate",
     "auth:migrate": "bun x --bun @better-auth/cli@latest migrate",
-    "auth:reset": "bun run scripts/reset-db.ts && bun run auth:migrate"
+    "auth:reset": "bun run scripts/reset-db.ts && bun run auth:migrate",
+    "test:endpoints": "bun run scripts/test-endpoints.ts"
   },
   "dependencies": {
     "@amirulabu/couchdb-better-auth": "^0.1.5",
@@ -13,12 +14,15 @@
     "@types/jsonwebtoken": "^9.0.10",
     "better-auth": "^1.4.4",
     "dotenv": "^17.2.3",
+    "fetch-cookie": "^2.1.0",
     "hono": "^4.10.7",
     "jsonwebtoken": "^9.0.2",
     "nano": "^11.0.3",
+    "tough-cookie": "^4.1.3",
     "zod": "^4.2.1"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/tough-cookie": "^4.0.5"
   }
 }

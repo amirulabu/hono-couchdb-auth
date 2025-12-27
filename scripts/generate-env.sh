@@ -6,6 +6,7 @@
 set -e
 
 ENV_FILE=".env"
+DOCKER_INI="config/docker.ini"
 TEMP_PRIVATE_KEY="/tmp/rsa_private_key_$$.pem"
 TEMP_PUBLIC_KEY="/tmp/rsa_public_key_$$.pem"
 
@@ -44,11 +45,35 @@ rm "$TEMP_PRIVATE_KEY" "$TEMP_PUBLIC_KEY"
 } > "$ENV_FILE"
 
 echo "✅ .env file created successfully!"
+
+# Update CouchDB docker.ini with the public key
+if [ -f "$DOCKER_INI" ]; then
+  echo ""
+  echo "🔧 Updating CouchDB config with matching public key..."
+  
+  # Use sed to update the rsa:_default line in docker.ini
+  # The public key needs to have newlines escaped as \n for the single-line config format
+  if grep -q "^rsa:_default" "$DOCKER_INI"; then
+    # Create a properly escaped version for sed replacement
+    ESCAPED_PUBLIC_KEY=$(echo "$COUCHDB_JWT_PUBLIC_KEY" | sed 's/[&/\]/\\&/g')
+    sed -i.bak "s|^rsa:_default.*|rsa:_default = $ESCAPED_PUBLIC_KEY|" "$DOCKER_INI"
+    rm -f "${DOCKER_INI}.bak"
+    echo "✅ Updated rsa:_default in $DOCKER_INI"
+  else
+    echo "⚠️  Could not find rsa:_default in $DOCKER_INI - please add it manually to [jwt_keys] section:"
+    echo "    rsa:_default = $COUCHDB_JWT_PUBLIC_KEY"
+  fi
+  
+  echo ""
+  echo "⚠️  Remember to restart CouchDB for the new key to take effect:"
+  echo "    docker-compose down && docker-compose up -d"
+fi
+
 echo ""
 echo "📝 Generated secrets:"
 echo "  - AUTH_SECRET: ${#AUTH_SECRET} characters"
 echo "  - COUCHDB_JWT_SECRET: RSA 2048-bit private key"
 echo "  - COUCHDB_JWT_PUBLIC_KEY: RSA 2048-bit public key"
 echo ""
-echo "⚠️  Keep this file secure and never commit it to version control!"
+echo "⚠️  Keep the .env file secure and never commit it to version control!"
 

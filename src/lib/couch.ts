@@ -103,7 +103,8 @@ export const generateCouchDbJwt = async (userId: string) => {
   // Ensure both user document AND user database exist
   await createUserDbIfNotExists({ userId });
 
-  const privateKey = env.COUCHDB_JWT_SECRET;
+  // Convert escaped newlines to actual newlines (dotenv stores them as literal \n)
+  const privateKey = env.COUCHDB_JWT_SECRET.replace(/\\n/g, "\n");
 
   const token = jwt.sign(
     {
