@@ -3,9 +3,6 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "typecheck": "bun x --bun tsc --noEmit",
-    "auth:generate": "bun x --bun @better-auth/cli@latest generate",
-    "auth:migrate": "bun x --bun @better-auth/cli@latest migrate",
-    "auth:reset": "bun run scripts/reset-db.ts && bun run auth:migrate",
     "test:endpoints": "bun run scripts/test-endpoints.ts"
   },
   "dependencies": {
