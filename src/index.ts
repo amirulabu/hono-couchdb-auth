@@ -11,10 +11,10 @@ config();
 const app = new Hono();
 
 app.use(
-  "*", // or replace with "*" to enable cors for all routes
+  "*",
   cors({
-    origin: "*", // replace with your origin
-    allowHeaders: ["Content-Type", "Authorization"],
+    origin: "*",
+    allowHeaders: ["Content-Type", "Authorization","Accept", "Origin", "Referer"],
     allowMethods: ["POST", "GET", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
@@ -45,9 +45,8 @@ app.get("/session", async (c) => {
   });
 });
 
-app.get("/", (c) => c.text("Hello, Hono!"));
+app.get("/", (c) => c.text("Hello, world!"));
 
-// Start server
 const port = env.PORT;
 
 export default {
