@@ -11,6 +11,28 @@ TEMP_PRIVATE_KEY="/tmp/rsa_private_key_$$.pem"
 TEMP_PUBLIC_KEY="/tmp/rsa_public_key_$$.pem"
 
 echo "🔐 Generating .env file with secrets..."
+echo ""
+
+# Prompt for COUCHDB_URL
+echo "📦 CouchDB URL Configuration"
+echo "   This is the connection URL for your CouchDB database."
+echo "   It should include the protocol, credentials, host, and port."
+echo "   Example: http://admin:password@localhost:5984"
+read -p "Enter COUCHDB_URL [http://admin:password@localhost:5984]: " COUCHDB_URL
+COUCHDB_URL=${COUCHDB_URL:-"http://admin:password@localhost:5984"}
+
+echo ""
+
+# Prompt for BETTER_AUTH_URL
+echo "🔗 Better Auth Base URL Configuration"
+echo "   This is the base URL where your Better Auth API is accessible."
+echo "   It's used for redirects, callbacks, and OAuth flows."
+echo "   Example: http://localhost:3000"
+read -p "Enter BETTER_AUTH_URL [http://localhost:3000]: " BETTER_AUTH_URL
+BETTER_AUTH_URL=${BETTER_AUTH_URL:-"http://localhost:3000"}
+
+echo ""
+echo "Generating secrets..."
 
 # Generate AUTH_SECRET - 32+ character secure random string
 echo "Generating AUTH_SECRET..."
@@ -34,6 +56,13 @@ rm "$TEMP_PRIVATE_KEY" "$TEMP_PUBLIC_KEY"
 # Create .env file using printf to preserve literal \n
 {
   echo "# Generated on $(date)"
+  echo ""
+  echo "# CouchDB connection URL (includes protocol, credentials, host, and port)"
+  echo "COUCHDB_URL=$COUCHDB_URL"
+  echo ""
+  echo "# Better Auth base URL (used for redirects, callbacks, and OAuth flows)"
+  echo "BETTER_AUTH_URL=$BETTER_AUTH_URL"
+  echo ""
   echo "# Auth secret for session management (min 32 characters)"
   echo "AUTH_SECRET=$AUTH_SECRET"
   echo ""
@@ -70,7 +99,9 @@ if [ -f "$DOCKER_INI" ]; then
 fi
 
 echo ""
-echo "📝 Generated secrets:"
+echo "📝 Generated .env file with:"
+echo "  - COUCHDB_URL: $COUCHDB_URL"
+echo "  - BETTER_AUTH_URL: $BETTER_AUTH_URL"
 echo "  - AUTH_SECRET: ${#AUTH_SECRET} characters"
 echo "  - COUCHDB_JWT_SECRET: RSA 2048-bit private key"
 echo "  - COUCHDB_JWT_PUBLIC_KEY: RSA 2048-bit public key"
